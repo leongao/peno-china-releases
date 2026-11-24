@@ -1,3 +1,7 @@
 {
-  "release": null
+  "release": {
+    "versionName": "0.4.10",
+    "versionCode": 22,
+    "url": "https://github.com/leongao/peno-china-releases/releases/download/v0.4.10/Peno-China-0.4.10.apk"
+  }
 }
