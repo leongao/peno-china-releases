@@ -41,8 +41,8 @@ def metadata(badging, resources, certs):
 
 def generate():
     sdk = Path(os.environ["ANDROID_HOME"]) / "build-tools"
-    tools = max((p for p in sdk.iterdir() if re.fullmatch(r"\d+(\.\d+)+", p.name)),
-                key=lambda p: tuple(map(int, p.name.split("."))))
+    # Match the build tools used to validate the production APK before upload.
+    tools = sdk / "36.0.0"
     pages = json.loads(output("gh", "api", "--paginate", "--slurp", f"repos/{REPO}/releases?per_page=100"))
     latest = None
     with tempfile.TemporaryDirectory() as temp:
@@ -55,9 +55,10 @@ def generate():
                                   output(tools / "aapt2", "dump", "resources", apk),
                                   output(tools / "apksigner", "verify", "--print-certs", apk))
             except subprocess.CalledProcessError:
-                print(f"Skipping invalid APK: {url}")
-                continue
-            if result and (latest is None or result["versionCode"] > latest["versionCode"]):
+                raise ValueError(f"Android SDK could not verify {url}")
+            if not result:
+                raise ValueError(f"Domestic APK failed channel, package or signer validation: {url}")
+            if (latest is None or result["versionCode"] > latest["versionCode"]):
                 latest = {**result, "url": url}
     return {"release": latest}
 
